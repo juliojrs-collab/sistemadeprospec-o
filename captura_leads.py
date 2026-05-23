@@ -53,32 +53,25 @@ from playwright.sync_api import sync_playwright, TimeoutError as PWTimeout
 
 
 # ==========================================================================
-#  CONFIG  — edite aqui
+#  CONFIG  — lido do arquivo configuracao.py (edite aquele, nao este)
 # ==========================================================================
+try:
+    from configuracao import BUSCAS, MAX_POR_BUSCA, EXTRAIR_DADOS_SITE, SAIDA_CSV
+except ImportError:
+    # Fallback caso configuracao.py nao exista
+    BUSCAS             = ["clinicas odontologicas em Curitiba PR"]
+    MAX_POR_BUSCA      = 40
+    EXTRAIR_DADOS_SITE = True
+    SAIDA_CSV          = "leads.csv"
+
 CONFIG = {
-    # Cada item da lista é uma busca. Formato livre: "nicho cidade".
-    "buscas": [
-        "restaurantes em Curitiba PR",
-        "clinicas odontologicas em Curitiba PR",
-        "academias em Curitiba PR",
-    ],
-
-    # Quantas empresas tentar coletar POR busca (limite de segurança).
-    "max_por_busca": 40,
-
-    # Visitar o site de cada empresa pra extrair e-mail, redes sociais
-    # e nome do responsável? (deixa mais lento, mas traz muito mais dados)
-    "extrair_dados_site": True,
-
-    # Mostrar o navegador (True = visível, recomendado na 1ª vez).
-    "headless": False,
-
-    # Arquivo de saída.
-    "saida_csv": "leads.csv",
-
-    # Pausas (segundos) pra parecer humano e não tomar bloqueio.
-    "pausa_min": 1.2,
-    "pausa_max": 3.0,
+    "buscas":             BUSCAS,
+    "max_por_busca":      MAX_POR_BUSCA,
+    "extrair_dados_site": EXTRAIR_DADOS_SITE,
+    "headless":           False,   # False = navegador visivel (recomendado)
+    "saida_csv":          SAIDA_CSV,
+    "pausa_min":          1.2,
+    "pausa_max":          3.0,
 }
 
 

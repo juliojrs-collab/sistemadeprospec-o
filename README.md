@@ -1,68 +1,121 @@
-# Sistema de Prospecção — Captura de Leads via Google Maps
+# Sistema de Captura de Leads — Google Maps
 
-Raspa o **Google Maps** para coletar contatos de empresas locais e, opcionalmente,
-extrai e-mails dos sites de cada empresa. Saída em CSV pronto para Excel / CRM.
+Busca empresas no Google Maps e monta uma planilha com:
+**nome · telefone · link do WhatsApp · endereço · e-mail · Instagram · Facebook · responsável**
+— pronta pra abrir no Excel ou importar no CRM.
 
-## Como funciona
+---
+
+## Como usar (passo a passo)
+
+### 🔷 Passo 0 — Baixar os arquivos
+
+Baixe esta pasta completa para o seu computador.
+Todos os arquivos precisam estar na **mesma pasta**.
+
+---
+
+### 🔷 Passo 1 — Instalar (só na primeira vez)
+
+Clique duas vezes no arquivo:
 
 ```
-ETAPA 1  Google Maps (Playwright/Chromium)
-         → nome · categoria · avaliação · nº reviews · telefone · endereço · site
-
-ETAPA 2  Visita o site de cada empresa (requests + regex)
-         → e-mails de contato
-
-SAÍDA    leads.csv  (UTF-8 com BOM — abre certinho no Excel)
+PASSO_1_INSTALAR.bat
 ```
 
-## Instalação (uma vez)
+Uma janela preta vai abrir e instalar tudo automaticamente.
 
-```bash
-pip install -r requirements.txt
-playwright install chromium
-```
+> ⚠️ **Se aparecer "Python não encontrado":**
+> O instalador vai abrir o site do Python automaticamente.
+> Baixe e instale o Python, mas **ATENÇÃO**: durante a instalação,
+> marque a opção **"Add Python to PATH"** antes de clicar em Install.
+> Depois rode o `PASSO_1_INSTALAR.bat` novamente.
 
-## Configuração
+---
 
-Edite o bloco **`CONFIG`** no topo do `captura_leads.py`:
+### 🔷 Passo 2 — Configurar suas buscas
 
-| Chave | Padrão | O que faz |
-|---|---|---|
-| `buscas` | lista de strings | Termos de busca no Maps (`"nicho cidade"`) |
-| `max_por_busca` | `40` | Limite de empresas por busca |
-| `extrair_emails` | `True` | Visitar sites para pescar e-mails |
-| `headless` | `False` | `False` = navegador visível (recomendado na 1ª vez) |
-| `saida_csv` | `"leads.csv"` | Nome do arquivo de saída |
-| `pausa_min/max` | `1.2 / 3.0` | Intervalo (s) entre ações — evita bloqueio |
+Abra o arquivo `configuracao.py` com o **Bloco de Notas**:
 
-Se os seletores do Maps pararem de funcionar, ajuste o bloco **`SEL`** (também no topo do script).
-
-## Uso rápido
-
-```bash
-python captura_leads.py
-```
-
-### Teste mínimo recomendado
+1. Clique com o botão **direito** no arquivo `configuracao.py`
+2. Selecione **"Abrir com"** → **"Bloco de Notas"**
+3. Edite a lista de buscas:
 
 ```python
-# Editar CONFIG temporariamente:
-"buscas": ["clinicas odontologicas em Curitiba PR"],
-"max_por_busca": 5,
-"extrair_emails": False,
-"headless": False,
+BUSCAS = [
+    "clinicas odontologicas em Curitiba PR",
+    "academias em Sao Paulo SP",
+    "saloes de beleza em Belo Horizonte MG",
+]
 ```
 
-## Backlog / melhorias mapeadas
+4. Salve com **Ctrl + S** e feche o Bloco de Notas.
 
-- [ ] Filtro por avaliação mínima (só empresas acima de nota X)
-- [ ] Captura de WhatsApp a partir dos sites
-- [ ] Exportação direta pro Google Sheets
+> **Dicas:**
+> - Use o formato `"tipo de negócio em Cidade UF"`
+> - Você pode ter quantas buscas quiser — uma por linha
+> - Para desativar uma busca sem apagar, coloque `#` na frente
 
-## Avisos
+---
 
-- Scraping do Google Maps **fere os Termos de Uso** do Google. Use com bom senso
-  e volume moderado.
-- Os seletores (`SEL`) podem quebrar quando o Google atualiza o layout.
-- Rode com `headless: False` na primeira vez para resolver tela de
-  consentimento/captcha manualmente.
+### 🔷 Passo 3 — Rodar
+
+Clique duas vezes no arquivo:
+
+```
+PASSO_2_RODAR.bat
+```
+
+O **navegador vai abrir automaticamente** e você vai ver ele trabalhando.
+Não feche o navegador nem a janela preta — espere terminar.
+
+> ⚠️ **Se aparecer uma tela de "Aceitar cookies" do Google:**
+> Clique em **Aceitar** manualmente. O sistema continua sozinho depois.
+
+---
+
+### 🔷 Passo 4 — Acessar os leads
+
+Quando terminar, o arquivo **`leads.csv`** vai aparecer nesta mesma pasta.
+
+- **Excel:** clique duas vezes para abrir
+- **Google Sheets:** vá em Arquivo → Importar → selecione o arquivo
+
+---
+
+## O que vem na planilha
+
+| Coluna | O que é |
+|---|---|
+| `nome` | Nome da empresa |
+| `categoria` | Tipo de negócio (ex.: Dentista, Academia) |
+| `telefone` | Telefone do Google Maps |
+| `whatsapp` | Link direto — clique e já abre a conversa |
+| `endereco` | Endereço completo |
+| `site` | Site da empresa |
+| `instagram` | Perfil do Instagram (quando encontrado) |
+| `facebook` | Página do Facebook (quando encontrado) |
+| `emails` | E-mail(s) de contato (quando encontrado) |
+| `responsavel` | Nome do dono/responsável (quando encontrado) |
+| `status` | **Preencha sua equipe:** Abordado / Interessado / Fechado… |
+| `atribuido_para` | **Preencha sua equipe:** nome do vendedor responsável |
+| `data_contato` | **Preencha sua equipe:** data do contato |
+| `observacoes` | **Preencha sua equipe:** notas livres |
+
+---
+
+## Dúvidas frequentes
+
+**O navegador abriu mas não encontrou nenhuma empresa.**
+→ O Google pode ter pedido um captcha. Resolva manualmente na janela do
+  navegador e o sistema continua sozinho.
+
+**Alguns campos vieram em branco (e-mail, Instagram, etc.).**
+→ Nem toda empresa tem site ou redes sociais. O sistema captura o que existir.
+
+**Quero buscar mais empresas.**
+→ Edite `MAX_POR_BUSCA` no arquivo `configuracao.py` (padrão: 40).
+
+**Quero salvar numa planilha diferente sem perder a anterior.**
+→ Edite `SAIDA_CSV` no arquivo `configuracao.py`,
+  ex.: `SAIDA_CSV = "leads_junho.csv"`
