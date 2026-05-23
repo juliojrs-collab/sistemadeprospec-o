@@ -1,0 +1,15 @@
+# Saída gerada pelo script
+leads.csv
+leads_*.csv
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+venv/
+.venv/
+
+# IDE
+.vscode/
+.idea/
