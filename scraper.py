@@ -275,7 +275,29 @@ def executar_busca(termo, quantidade, extrair_dados, log_fn=print):
     with sync_playwright() as pw:
         nav = pw.chromium.launch(
             headless=True,
-            args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu"],
+            args=[
+                "--no-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-gpu",
+                "--single-process",           # 1 processo só → menos RAM
+                "--no-zygote",                # sem processo zygote
+                "--disable-extensions",
+                "--disable-background-networking",
+                "--disable-background-timer-throttling",
+                "--disable-backgrounding-occluded-windows",
+                "--disable-breakpad",
+                "--disable-client-side-phishing-detection",
+                "--disable-default-apps",
+                "--disable-hang-monitor",
+                "--disable-popup-blocking",
+                "--disable-renderer-backgrounding",
+                "--disable-sync",
+                "--metrics-recording-only",
+                "--mute-audio",
+                "--no-first-run",
+                "--safebrowsing-disable-auto-update",
+                "--disable-features=site-per-process,TranslateUI",
+            ],
         )
         try:
             page = nav.new_page(locale="pt-BR")

@@ -365,6 +365,7 @@
 <script>
   let jobId = null;
   let polling = null;
+  let erros502 = 0;
 
   /* ── Iniciar busca ──────────────────────────────────────── */
   function iniciarBusca() {
@@ -414,11 +415,21 @@
     fetch('/status/' + jobId)
       .then(r => {
         if (r.status === 404) {
-          clearInterval(polling);
+          clearInterval(polling); erros502 = 0;
           document.getElementById('btn-buscar').disabled = false;
           mostrarErro('O servidor reiniciou durante a busca. Clique em Gerar Relatório para tentar novamente.');
           return null;
         }
+        if (r.status >= 500) {
+          erros502++;
+          if (erros502 >= 4) {
+            clearInterval(polling); erros502 = 0;
+            document.getElementById('btn-buscar').disabled = false;
+            mostrarErro('O servidor travou durante a busca (memória insuficiente). Tente buscar uma quantidade menor de empresas.');
+          }
+          return null;
+        }
+        erros502 = 0;
         return r.json();
       })
       .then(d => {
