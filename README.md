@@ -1,121 +1,81 @@
 # Sistema de Captura de Leads — Google Maps
 
-Busca empresas no Google Maps e monta uma planilha com:
-**nome · telefone · link do WhatsApp · endereço · e-mail · Instagram · Facebook · responsável**
-— pronta pra abrir no Excel ou importar no CRM.
+Página web para buscar empresas locais no Google Maps e exportar os contatos em Excel (CSV).
+
+## O que o sistema faz
+
+1. Você acessa a página pelo link
+2. Escolhe: **tipo de negócio**, **cidade**, **estado** e **bairro** (opcional)
+3. Clica em **Gerar Relatório**
+4. O sistema busca no Google Maps e extrai: nome, telefone, WhatsApp, e-mail, Instagram, Facebook, endereço, site e responsável
+5. Você clica em **Baixar Excel (CSV)**
 
 ---
 
-## Como usar (passo a passo)
+## Como colocar no ar (Render — gratuito)
 
-### 🔷 Passo 0 — Baixar os arquivos
+### Pré-requisitos
+- Conta no [GitHub](https://github.com) (gratuito)
+- Conta no [Render](https://render.com) (gratuito)
 
-Baixe esta pasta completa para o seu computador.
-Todos os arquivos precisam estar na **mesma pasta**.
+### Passo 1 — Enviar o código pro GitHub
+
+1. Acesse [github.com](https://github.com) e crie um repositório novo (pode ser privado)
+2. Faça upload de todos os arquivos desta pasta para o repositório
+
+### Passo 2 — Criar o serviço no Render
+
+1. Acesse [render.com](https://render.com) e faça login
+2. Clique em **New → Web Service**
+3. Conecte seu repositório do GitHub
+4. Preencha:
+   - **Name:** captura-leads (ou qualquer nome)
+   - **Build Command:** `pip install -r requirements.txt && playwright install chromium && playwright install-deps chromium`
+   - **Start Command:** `gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --timeout 300`
+5. Clique em **Create Web Service**
+6. Aguarde o deploy (5–10 minutos na primeira vez)
+7. Render fornece um link público — ex.: `https://captura-leads.onrender.com`
 
 ---
 
-### 🔷 Passo 1 — Instalar (só na primeira vez)
+## Como testar localmente (Windows)
 
-Clique duas vezes no arquivo:
-
-```
-PASSO_1_INSTALAR.bat
-```
-
-Uma janela preta vai abrir e instalar tudo automaticamente.
-
-> ⚠️ **Se aparecer "Python não encontrado":**
-> O instalador vai abrir o site do Python automaticamente.
-> Baixe e instale o Python, mas **ATENÇÃO**: durante a instalação,
-> marque a opção **"Add Python to PATH"** antes de clicar em Install.
-> Depois rode o `PASSO_1_INSTALAR.bat` novamente.
-
----
-
-### 🔷 Passo 2 — Configurar suas buscas
-
-Abra o arquivo `configuracao.py` com o **Bloco de Notas**:
-
-1. Clique com o botão **direito** no arquivo `configuracao.py`
-2. Selecione **"Abrir com"** → **"Bloco de Notas"**
-3. Edite a lista de buscas:
-
-```python
-BUSCAS = [
-    "clinicas odontologicas em Curitiba PR",
-    "academias em Sao Paulo SP",
-    "saloes de beleza em Belo Horizonte MG",
-]
+```bash
+pip install -r requirements.txt
+playwright install chromium
+python app.py
 ```
 
-4. Salve com **Ctrl + S** e feche o Bloco de Notas.
-
-> **Dicas:**
-> - Use o formato `"tipo de negócio em Cidade UF"`
-> - Você pode ter quantas buscas quiser — uma por linha
-> - Para desativar uma busca sem apagar, coloque `#` na frente
+Abra o Chrome em: `http://localhost:5000`
 
 ---
 
-### 🔷 Passo 3 — Rodar
+## Arquivos do projeto
 
-Clique duas vezes no arquivo:
-
-```
-PASSO_2_RODAR.bat
-```
-
-O **navegador vai abrir automaticamente** e você vai ver ele trabalhando.
-Não feche o navegador nem a janela preta — espere terminar.
-
-> ⚠️ **Se aparecer uma tela de "Aceitar cookies" do Google:**
-> Clique em **Aceitar** manualmente. O sistema continua sozinho depois.
-
----
-
-### 🔷 Passo 4 — Acessar os leads
-
-Quando terminar, o arquivo **`leads.csv`** vai aparecer nesta mesma pasta.
-
-- **Excel:** clique duas vezes para abrir
-- **Google Sheets:** vá em Arquivo → Importar → selecione o arquivo
-
----
-
-## O que vem na planilha
-
-| Coluna | O que é |
+| Arquivo | O que é |
 |---|---|
-| `nome` | Nome da empresa |
-| `categoria` | Tipo de negócio (ex.: Dentista, Academia) |
-| `telefone` | Telefone do Google Maps |
-| `whatsapp` | Link direto — clique e já abre a conversa |
-| `endereco` | Endereço completo |
-| `site` | Site da empresa |
-| `instagram` | Perfil do Instagram (quando encontrado) |
-| `facebook` | Página do Facebook (quando encontrado) |
-| `emails` | E-mail(s) de contato (quando encontrado) |
-| `responsavel` | Nome do dono/responsável (quando encontrado) |
-| `status` | **Preencha sua equipe:** Abordado / Interessado / Fechado… |
-| `atribuido_para` | **Preencha sua equipe:** nome do vendedor responsável |
-| `data_contato` | **Preencha sua equipe:** data do contato |
-| `observacoes` | **Preencha sua equipe:** notas livres |
+| `app.py` | Servidor Flask — gerencia as buscas e rotas |
+| `scraper.py` | Lógica de scraping do Google Maps e dos sites |
+| `templates/index.html` | A página web |
+| `requirements.txt` | Dependências Python |
+| `Procfile` | Configuração para o servidor online |
+| `render.yaml` | Deploy automático no Render |
 
 ---
 
-## Dúvidas frequentes
+## Colunas do CSV gerado
 
-**O navegador abriu mas não encontrou nenhuma empresa.**
-→ O Google pode ter pedido um captcha. Resolva manualmente na janela do
-  navegador e o sistema continua sozinho.
-
-**Alguns campos vieram em branco (e-mail, Instagram, etc.).**
-→ Nem toda empresa tem site ou redes sociais. O sistema captura o que existir.
-
-**Quero buscar mais empresas.**
-→ Edite `MAX_POR_BUSCA` no arquivo `configuracao.py` (padrão: 40).
-
-**Quero salvar numa planilha diferente sem perder a anterior.**
-→ Edite `SAIDA_CSV` no arquivo `configuracao.py`,
-  ex.: `SAIDA_CSV = "leads_junho.csv"`
+| Coluna | De onde vem |
+|---|---|
+| Data | Data da captura |
+| Nome | Google Maps |
+| Categoria | Google Maps |
+| Telefone | Google Maps |
+| WhatsApp | Gerado do telefone (link direto) |
+| E-mail | Site da empresa |
+| Instagram | Site da empresa |
+| Facebook | Site da empresa |
+| Responsável | Site da empresa (quando disponível) |
+| Endereço | Google Maps |
+| Site | Google Maps |
+| status / atribuido_para / data_contato / observacoes | Em branco — para a equipe preencher |

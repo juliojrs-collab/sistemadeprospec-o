@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Captura de Leads — Google Maps</title>
+  <style>
+    /* ── Reset ────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #f0f4f8;
+      color: #1e293b;
+      min-height: 100vh;
+    }
+
+    /* ── Header ───────────────────────────────────────────── */
+    header {
+      background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+      color: #fff;
+      padding: 28px 32px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.2);
+    }
+    header h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: -.02em; }
+    header p  { font-size: .9rem; opacity: .8; margin-top: 4px; }
+
+    /* ── Layout ───────────────────────────────────────────── */
+    .page { max-width: 1000px; margin: 32px auto; padding: 0 16px 48px; }
+
+    /* ── Card ─────────────────────────────────────────────── */
+    .card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 28px 32px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.05);
+      margin-bottom: 24px;
+    }
+    .card-title {
+      font-size: .75rem;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      margin-bottom: 20px;
+    }
+
+    /* ── Form grid ────────────────────────────────────────── */
+    .grid { display: grid; gap: 16px; }
+    .g3   { grid-template-columns: 2fr 1.3fr .7fr; }
+    .g2   { grid-template-columns: 1fr 1fr; }
+
+    label {
+      display: block;
+      font-size: .82rem;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 6px;
+    }
+    select, input[type=text] {
+      width: 100%;
+      padding: 10px 13px;
+      border: 1.5px solid #d1d5db;
+      border-radius: 8px;
+      font-size: .95rem;
+      color: #1e293b;
+      background: #fff;
+      transition: border-color .15s, box-shadow .15s;
+      appearance: none;
+    }
+    select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+    select:focus, input:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37,99,235,.12);
+    }
+
+    /* ── Checkbox ─────────────────────────────────────────── */
+    .check-row { display: flex; align-items: center; gap: 10px; padding: 14px 0 4px; }
+    .check-row input { width: 18px; height: 18px; accent-color: #2563eb; cursor: pointer; flex-shrink: 0; }
+    .check-row label { margin: 0; font-weight: 400; cursor: pointer; font-size: .9rem; color: #374151; }
+    .check-row em { color: #6b7280; font-style: normal; }
+
+    /* ── Buttons ──────────────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 28px; border-radius: 9px;
+      font-size: 1rem; font-weight: 700;
+      cursor: pointer; border: none;
+      transition: background .15s, transform .1s, box-shadow .15s;
+    }
+    .btn:active { transform: scale(.98); }
+    .btn-blue  { background: #2563eb; color: #fff; box-shadow: 0 2px 8px rgba(37,99,235,.3); }
+    .btn-blue:hover  { background: #1d4ed8; }
+    .btn-blue:disabled { background: #93c5fd; cursor: not-allowed; box-shadow: none; }
+    .btn-green { background: #16a34a; color: #fff; box-shadow: 0 2px 8px rgba(22,163,74,.3); }
+    .btn-green:hover { background: #15803d; }
+    .btn-row   { display: flex; align-items: center; gap: 14px; margin-top: 20px; }
+
+    /* ── Erro ─────────────────────────────────────────────── */
+    #msg-erro { color: #dc2626; font-size: .88rem; }
+
+    /* ── Loading ──────────────────────────────────────────── */
+    .spinner {
+      width: 48px; height: 48px;
+      border: 4px solid #e2e8f0; border-top-color: #2563eb;
+      border-radius: 50%;
+      animation: spin .75s linear infinite;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #loading-info { text-align: center; padding: 8px 0 16px; }
+    #loading-info p { color: #374151; font-size: 1rem; font-weight: 600; }
+    #loading-info small { color: #64748b; font-size: .84rem; }
+
+    /* log de progresso */
+    #log-box {
+      background: #0f172a; color: #94a3b8;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: .78rem; line-height: 1.5;
+      padding: 14px 16px; border-radius: 8px;
+      max-height: 220px; overflow-y: auto;
+      white-space: pre-wrap; margin-top: 6px;
+    }
+
+    /* ── Stats ────────────────────────────────────────────── */
+    .stats { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 22px; }
+    .stat {
+      background: #eff6ff; border-radius: 10px;
+      padding: 12px 20px; text-align: center; min-width: 100px;
+    }
+    .stat .num   { font-size: 1.9rem; font-weight: 800; color: #2563eb; }
+    .stat .lbl   { font-size: .75rem; color: #64748b; margin-top: 2px; }
+
+    /* ── Tabela ───────────────────────────────────────────── */
+    .tbl-wrap { overflow-x: auto; border-radius: 8px; border: 1px solid #e2e8f0; }
+    table { width: 100%; border-collapse: collapse; font-size: .83rem; }
+    thead th {
+      background: #1e293b; color: #f1f5f9;
+      padding: 10px 13px; text-align: left;
+      white-space: nowrap; font-weight: 600;
+      position: sticky; top: 0;
+    }
+    tbody tr:nth-child(even) { background: #f8fafc; }
+    tbody tr:hover { background: #eff6ff; }
+    td {
+      padding: 9px 13px;
+      border-bottom: 1px solid #e2e8f0;
+      vertical-align: top;
+      max-width: 220px;
+    }
+    td a { color: #2563eb; text-decoration: none; }
+    td a:hover { text-decoration: underline; }
+    .tag {
+      display: inline-block;
+      background: #dbeafe; color: #1e40af;
+      border-radius: 4px; padding: 1px 7px;
+      font-size: .75rem; font-weight: 600;
+      white-space: nowrap;
+    }
+
+    /* ── Utilitários ──────────────────────────────────────── */
+    .hidden { display: none !important; }
+
+    @media (max-width: 640px) {
+      .g3, .g2 { grid-template-columns: 1fr; }
+      header { padding: 20px 16px; }
+      .card   { padding: 20px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Cabeçalho ─────────────────────────────────────────── -->
+<header>
+  <h1>🎯 Captura de Leads — Google Maps</h1>
+  <p>Preencha os filtros, clique em Gerar Relatório e baixe o Excel com os contatos.</p>
+</header>
+
+<div class="page">
+
+  <!-- ── Filtros ─────────────────────────────────────────── -->
+  <div class="card" id="card-filtros">
+    <div class="card-title">📋 Configure sua busca</div>
+
+    <div class="grid g3">
+      <div>
+        <label for="tipo">Tipo de Negócio *</label>
+        <select id="tipo">
+          <option value="">— Selecione —</option>
+          <optgroup label="🍽️ Alimentação">
+            <option value="restaurante">Restaurante / Lanchonete</option>
+            <option value="pizzaria">Pizzaria</option>
+            <option value="churrascaria">Churrascaria</option>
+            <option value="padaria confeitaria">Padaria / Confeitaria</option>
+            <option value="sorveteria açaí">Sorveteria / Açaí</option>
+            <option value="bar pub">Bar / Pub</option>
+            <option value="café cafeteria">Café / Cafeteria</option>
+            <option value="hamburgueria">Hamburgueria</option>
+          </optgroup>
+          <optgroup label="🏥 Saúde">
+            <option value="clínica médica">Clínica Médica</option>
+            <option value="clínica odontológica dentista">Clínica Odontológica</option>
+            <option value="clínica de estética">Clínica de Estética</option>
+            <option value="psicólogo">Psicólogo / Psicóloga</option>
+            <option value="fisioterapeuta">Fisioterapeuta</option>
+            <option value="nutricionista">Nutricionista</option>
+            <option value="oftalmologista">Oftalmologista</option>
+            <option value="dermatologista">Dermatologista</option>
+            <option value="farmácia drogaria">Farmácia / Drogaria</option>
+            <option value="veterinário pet shop">Veterinário / Pet Shop</option>
+          </optgroup>
+          <optgroup label="💇 Beleza">
+            <option value="salão de beleza">Salão de Beleza</option>
+            <option value="barbearia">Barbearia</option>
+            <option value="manicure nail designer">Manicure / Nail Designer</option>
+            <option value="spa massagem">Spa / Massagem</option>
+          </optgroup>
+          <optgroup label="📚 Educação">
+            <option value="escola colégio">Escola / Colégio</option>
+            <option value="creche berçário">Creche / Berçário</option>
+            <option value="escola de idiomas">Escola de Idiomas</option>
+            <option value="escola de música">Escola de Música</option>
+            <option value="curso profissionalizante">Curso Profissionalizante</option>
+          </optgroup>
+          <optgroup label="⚖️ Jurídico / Financeiro">
+            <option value="escritório de advocacia">Escritório de Advocacia</option>
+            <option value="contabilidade contador">Contabilidade / Contador</option>
+            <option value="corretora de seguros">Corretora de Seguros</option>
+            <option value="imobiliária">Imobiliária</option>
+            <option value="despachante">Despachante</option>
+          </optgroup>
+          <optgroup label="🚗 Automóveis">
+            <option value="oficina mecânica">Oficina Mecânica</option>
+            <option value="lava-rápido">Lava-Rápido</option>
+            <option value="elétrica automotiva">Elétrica Automotiva</option>
+            <option value="autopeças">Autopeças</option>
+            <option value="concessionária">Concessionária</option>
+          </optgroup>
+          <optgroup label="🛒 Comércio">
+            <option value="mercado supermercado">Mercado / Supermercado</option>
+            <option value="loja de roupas moda">Loja de Roupas / Moda</option>
+            <option value="loja de calçados">Loja de Calçados</option>
+            <option value="loja de móveis">Loja de Móveis</option>
+            <option value="material de construção">Material de Construção</option>
+            <option value="pet shop">Pet Shop</option>
+            <option value="papelaria">Papelaria</option>
+          </optgroup>
+          <optgroup label="🔧 Serviços">
+            <option value="academia de ginástica">Academia de Ginástica</option>
+            <option value="construtora reformas">Construtora / Reformas</option>
+            <option value="eletricista">Elétrica / Eletricista</option>
+            <option value="encanamento hidráulica">Encanamento / Hidráulica</option>
+            <option value="agência de marketing">Agência de Marketing</option>
+            <option value="gráfica impressão">Gráfica / Impressão</option>
+            <option value="hotel pousada">Hotel / Pousada</option>
+            <option value="lavanderia">Lavanderia</option>
+            <option value="segurança patrimonial">Segurança Patrimonial</option>
+          </optgroup>
+        </select>
+      </div>
+
+      <div>
+        <label for="cidade">Cidade *</label>
+        <input type="text" id="cidade" placeholder="Ex.: São Paulo" />
+      </div>
+
+      <div>
+        <label for="estado">Estado *</label>
+        <select id="estado">
+          <option value="">UF</option>
+          <option>AC</option><option>AL</option><option>AM</option><option>AP</option>
+          <option>BA</option><option>CE</option><option>DF</option><option>ES</option>
+          <option>GO</option><option>MA</option><option>MG</option><option>MS</option>
+          <option>MT</option><option>PA</option><option>PB</option><option>PE</option>
+          <option>PI</option><option>PR</option><option>RJ</option><option>RN</option>
+          <option>RO</option><option>RR</option><option>RS</option><option>SC</option>
+          <option>SE</option><option selected>SP</option><option>TO</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="grid g2" style="margin-top:16px">
+      <div>
+        <label for="bairro">Bairro <span style="font-weight:400;color:#9ca3af">(opcional)</span></label>
+        <input type="text" id="bairro" placeholder="Ex.: Centro, Jardins, Savassi…" />
+      </div>
+      <div>
+        <label for="qtd">Quantidade máxima de empresas</label>
+        <select id="qtd">
+          <option value="20">20 empresas</option>
+          <option value="40" selected>40 empresas</option>
+          <option value="60">60 empresas</option>
+          <option value="80">80 empresas</option>
+          <option value="100">100 empresas</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="check-row">
+      <input type="checkbox" id="extrair" checked />
+      <label for="extrair">
+        Buscar e-mail, Instagram e Facebook nos sites das empresas
+        <em>— recomendado, mas deixa mais lento</em>
+      </label>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-blue" id="btn-buscar" onclick="iniciarBusca()">
+        ▶&nbsp;&nbsp;GERAR RELATÓRIO
+      </button>
+      <span id="msg-erro"></span>
+    </div>
+  </div>
+
+  <!-- ── Loading ─────────────────────────────────────────── -->
+  <div class="card hidden" id="card-loading">
+    <div id="loading-info">
+      <div class="spinner"></div>
+      <p>Buscando empresas no Google Maps…</p>
+      <small>Isso pode levar alguns minutos. Não feche a página.</small>
+    </div>
+    <div id="log-box"></div>
+  </div>
+
+  <!-- ── Resultado ───────────────────────────────────────── -->
+  <div class="card hidden" id="card-resultado">
+    <div class="card-title">📊 Resultado</div>
+
+    <div class="stats" id="stats"></div>
+
+    <div class="btn-row" style="margin-top:0; margin-bottom:22px">
+      <button class="btn btn-green" id="btn-csv" onclick="baixarCSV()">
+        ⬇&nbsp;&nbsp;BAIXAR EXCEL (CSV)
+      </button>
+      <button class="btn btn-blue" onclick="novaBusca()" style="font-size:.9rem;padding:10px 20px">
+        + Nova Busca
+      </button>
+    </div>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Nome</th>
+            <th>Categoria</th>
+            <th>Telefone</th>
+            <th>WhatsApp</th>
+            <th>E-mail</th>
+            <th>Instagram</th>
+            <th>Facebook</th>
+            <th>Responsável</th>
+            <th>Endereço</th>
+            <th>Site</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<!-- ── JavaScript ──────────────────────────────────────────── -->
+<script>
+  let jobId = null;
+  let polling = null;
+
+  /* ── Iniciar busca ──────────────────────────────────────── */
+  function iniciarBusca() {
+    const tipo   = v('tipo');
+    const cidade = v('cidade').trim();
+    const estado = v('estado');
+    const erro   = document.getElementById('msg-erro');
+
+    if (!tipo || !cidade || !estado) {
+      erro.textContent = '⚠ Preencha o Tipo de Negócio, a Cidade e o Estado.';
+      return;
+    }
+    erro.textContent = '';
+
+    const bairro   = v('bairro').trim();
+    const qtd      = parseInt(v('qtd'));
+    const extrair  = document.getElementById('extrair').checked;
+
+    // UI
+    document.getElementById('btn-buscar').disabled = true;
+    show('card-loading');
+    hide('card-resultado');
+    document.getElementById('log-box').textContent = '';
+
+    fetch('/buscar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tipo_negocio:  tipo,
+        cidade, estado, bairro,
+        quantidade:    qtd,
+        extrair_dados: extrair,
+      }),
+    })
+    .then(r => r.json())
+    .then(d => {
+      if (d.erro) { mostrarErro(d.erro); return; }
+      jobId = d.job_id;
+      polling = setInterval(checarStatus, 3000);
+    })
+    .catch(e => mostrarErro('Erro de conexão: ' + e.message));
+  }
+
+  /* ── Polling de status ──────────────────────────────────── */
+  function checarStatus() {
+    if (!jobId) return;
+    fetch('/status/' + jobId)
+      .then(r => r.json())
+      .then(d => {
+        if (d.log) {
+          const lb = document.getElementById('log-box');
+          lb.textContent = d.log;
+          lb.scrollTop = lb.scrollHeight;
+        }
+        if (d.status === 'done') {
+          clearInterval(polling);
+          carregarResultado();
+        } else if (d.status === 'error') {
+          clearInterval(polling);
+          mostrarErro(d.erro || 'Erro desconhecido.');
+        }
+      })
+      .catch(() => {}); // erros de rede temporários — ignora
+  }
+
+  /* ── Carregar e exibir resultado ────────────────────────── */
+  function carregarResultado() {
+    fetch('/resultado/' + jobId)
+      .then(r => r.json())
+      .then(d => exibir(d.data))
+      .catch(e => mostrarErro(e.message));
+  }
+
+  function exibir(leads) {
+    hide('card-loading');
+    show('card-resultado');
+    document.getElementById('btn-buscar').disabled = false;
+
+    // Stats
+    const ct = leads.filter(l => l.telefone).length;
+    const cw = leads.filter(l => l.whatsapp).length;
+    const cm = leads.filter(l => l.emails).length;
+    const ci = leads.filter(l => l.instagram).length;
+    const cf = leads.filter(l => l.facebook).length;
+
+    document.getElementById('stats').innerHTML = [
+      stat(leads.length, 'Empresas'),
+      stat(ct, 'Telefone'),
+      stat(cw, 'WhatsApp'),
+      stat(cm, 'E-mail'),
+      stat(ci, 'Instagram'),
+      stat(cf, 'Facebook'),
+    ].join('');
+
+    // Tabela
+    const tbody = document.getElementById('tbody');
+    tbody.innerHTML = '';
+    leads.forEach(l => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${e(l.data)}</td>
+        <td><strong>${e(l.nome)}</strong></td>
+        <td>${l.categoria ? `<span class="tag">${e(l.categoria)}</span>` : ''}</td>
+        <td>${e(l.telefone)}</td>
+        <td>${l.whatsapp ? `<a href="${e(l.whatsapp)}" target="_blank">💬 Abrir</a>` : ''}</td>
+        <td style="max-width:180px;word-break:break-word">${e(l.emails)}</td>
+        <td>${l.instagram ? `<a href="${e(l.instagram)}" target="_blank">📷 Ver</a>` : ''}</td>
+        <td>${l.facebook  ? `<a href="${e(l.facebook)}"  target="_blank">👍 Ver</a>` : ''}</td>
+        <td>${e(l.responsavel)}</td>
+        <td style="max-width:200px">${e(l.endereco)}</td>
+        <td>${l.site ? `<a href="${e(l.site)}" target="_blank">🌐</a>` : ''}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  /* ── Download ───────────────────────────────────────────── */
+  function baixarCSV() {
+    if (jobId) window.location.href = '/download/' + jobId;
+  }
+
+  /* ── Nova busca ─────────────────────────────────────────── */
+  function novaBusca() {
+    hide('card-resultado');
+    jobId = null;
+  }
+
+  /* ── Helpers ────────────────────────────────────────────── */
+  function v(id)  { return document.getElementById(id).value; }
+  function show(id) { document.getElementById(id).classList.remove('hidden'); }
+  function hide(id) { document.getElementById(id).classList.add('hidden'); }
+  function stat(n, l) {
+    return `<div class="stat"><div class="num">${n}</div><div class="lbl">${l}</div></div>`;
+  }
+  function e(s) {
+    return String(s||'')
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function mostrarErro(msg) {
+    hide('card-loading');
+    document.getElementById('btn-buscar').disabled = false;
+    document.getElementById('msg-erro').textContent = '⚠ ' + msg;
+  }
+</script>
+
+</body>
+</html>
