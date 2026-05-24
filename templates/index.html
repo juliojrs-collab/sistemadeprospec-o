@@ -296,14 +296,6 @@
       </div>
     </div>
 
-    <div class="check-row">
-      <input type="checkbox" id="extrair" checked />
-      <label for="extrair">
-        Buscar e-mail, Instagram e Facebook nos sites das empresas
-        <em>— recomendado, mas deixa mais lento</em>
-      </label>
-    </div>
-
     <div class="btn-row">
       <button class="btn btn-blue" id="btn-buscar" onclick="iniciarBusca()">
         ▶&nbsp;&nbsp;GERAR RELATÓRIO
@@ -343,15 +335,8 @@
           <tr>
             <th>Data</th>
             <th>Nome</th>
-            <th>Categoria</th>
             <th>Telefone</th>
-            <th>WhatsApp</th>
-            <th>E-mail</th>
-            <th>Instagram</th>
-            <th>Facebook</th>
-            <th>Responsável</th>
             <th>Endereço</th>
-            <th>Site</th>
           </tr>
         </thead>
         <tbody id="tbody"></tbody>
@@ -382,7 +367,6 @@
 
     const bairro   = v('bairro').trim();
     const qtd      = parseInt(v('qtd'));
-    const extrair  = document.getElementById('extrair').checked;
 
     // UI
     document.getElementById('btn-buscar').disabled = true;
@@ -394,10 +378,9 @@
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        tipo_negocio:  tipo,
+        tipo_negocio: tipo,
         cidade, estado, bairro,
-        quantidade:    qtd,
-        extrair_dados: extrair,
+        quantidade:   qtd,
       }),
     })
     .then(r => r.json())
@@ -466,18 +449,10 @@
 
     // Stats
     const ct = leads.filter(l => l.telefone).length;
-    const cw = leads.filter(l => l.whatsapp).length;
-    const cm = leads.filter(l => l.emails).length;
-    const ci = leads.filter(l => l.instagram).length;
-    const cf = leads.filter(l => l.facebook).length;
 
     document.getElementById('stats').innerHTML = [
       stat(leads.length, 'Empresas'),
-      stat(ct, 'Telefone'),
-      stat(cw, 'WhatsApp'),
-      stat(cm, 'E-mail'),
-      stat(ci, 'Instagram'),
-      stat(cf, 'Facebook'),
+      stat(ct, 'Com telefone'),
     ].join('');
 
     // Tabela
@@ -488,15 +463,8 @@
       tr.innerHTML = `
         <td>${e(l.data)}</td>
         <td><strong>${e(l.nome)}</strong></td>
-        <td>${l.categoria ? `<span class="tag">${e(l.categoria)}</span>` : ''}</td>
         <td>${e(l.telefone)}</td>
-        <td>${l.whatsapp ? `<a href="${e(l.whatsapp)}" target="_blank">💬 Abrir</a>` : ''}</td>
-        <td style="max-width:180px;word-break:break-word">${e(l.emails)}</td>
-        <td>${l.instagram ? `<a href="${e(l.instagram)}" target="_blank">📷 Ver</a>` : ''}</td>
-        <td>${l.facebook  ? `<a href="${e(l.facebook)}"  target="_blank">👍 Ver</a>` : ''}</td>
-        <td>${e(l.responsavel)}</td>
-        <td style="max-width:200px">${e(l.endereco)}</td>
-        <td>${l.site ? `<a href="${e(l.site)}" target="_blank">🌐</a>` : ''}</td>
+        <td style="max-width:240px">${e(l.endereco)}</td>
       `;
       tbody.appendChild(tr);
     });

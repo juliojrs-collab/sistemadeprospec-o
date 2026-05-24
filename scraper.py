@@ -76,10 +76,7 @@ PAGINAS_CONTATO = ("", "contato", "contact", "fale-conosco", "sobre", "about", "
 #  COLUNAS DO CSV (ordem final)
 # ──────────────────────────────────────────────────────────────
 COLUNAS = [
-    "data", "nome", "categoria", "avaliacao", "reviews",
-    "telefone", "whatsapp",
-    "emails", "instagram", "facebook",
-    "endereco", "site", "responsavel",
+    "data", "nome", "telefone", "endereco",
     "status", "atribuido_para", "data_contato", "observacoes",
 ]
 
@@ -145,21 +142,11 @@ def _rolar_feed(page, max_itens):
 
 
 def _ficha(page):
-    tel = _txt(page.locator(SEL["telefone"]))
-    p = {
-        "nome":      _txt(page.locator(SEL["nome"])),
-        "categoria": _txt(page.locator(SEL["categoria"])),
-        "avaliacao": _txt(page.locator(SEL["rating"])),
-        "reviews":   _txt(page.locator(SEL["reviews"])),
-        "endereco":  _txt(page.locator(SEL["endereco"])),
-        "telefone":  tel,
-        "whatsapp":  _whatsapp(tel),
-        "site":      _attr(page.locator(SEL["site"]), "href"),
-        "emails": "", "instagram": "", "facebook": "", "responsavel": "",
+    return {
+        "nome":     _txt(page.locator(SEL["nome"])),
+        "telefone": _txt(page.locator(SEL["telefone"])),
+        "endereco": _txt(page.locator(SEL["endereco"])),
     }
-    m = re.search(r"[\d.,]+", p["reviews"])
-    p["reviews"] = m.group(0) if m else ""
-    return p
 
 
 def _raspar(page, termo, quantidade, log_fn):
@@ -266,9 +253,10 @@ def _site(url):
 # ──────────────────────────────────────────────────────────────
 #  FUNÇÃO PRINCIPAL — chamada pelo servidor Flask
 # ──────────────────────────────────────────────────────────────
-def executar_busca(termo, quantidade, extrair_dados, log_fn=print):
+def executar_busca(termo, quantidade, log_fn=print):
     """
-    Executa a busca completa e retorna lista de dicts (leads).
+    Executa a busca no Google Maps e retorna lista de dicts (leads).
+    Coleta apenas: nome, telefone e endereço.
     """
     leads = []
 
@@ -279,8 +267,8 @@ def executar_busca(termo, quantidade, extrair_dados, log_fn=print):
                 "--no-sandbox",
                 "--disable-dev-shm-usage",
                 "--disable-gpu",
-                "--single-process",           # 1 processo só → menos RAM
-                "--no-zygote",                # sem processo zygote
+                "--single-process",
+                "--no-zygote",
                 "--disable-extensions",
                 "--disable-background-networking",
                 "--disable-background-timer-throttling",
@@ -307,18 +295,6 @@ def executar_busca(termo, quantidade, extrair_dados, log_fn=print):
             nav.close()
 
     log_fn(f"\n[TOTAL] {len(leads)} empresas coletadas.\n")
-
-    if extrair_dados and leads:
-        log_fn("[ETAPA 2] Buscando e-mail, Instagram e Facebook nos sites...\n")
-        for i, lead in enumerate(leads, 1):
-            if lead.get("site"):
-                dados = _site(lead["site"])
-                lead.update(dados)
-                partes = []
-                if dados["emails"]:    partes.append("📧 e-mail")
-                if dados["instagram"]: partes.append("📷 instagram")
-                if dados["facebook"]:  partes.append("👍 facebook")
-                log_fn(f"  {i:>3}/{len(leads)}  {lead['nome'][:40]}  {'  '.join(partes) or '—'}\n")
 
     hoje = date.today().strftime("%d/%m/%Y")
     for lead in leads:

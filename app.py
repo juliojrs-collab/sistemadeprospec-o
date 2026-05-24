@@ -56,7 +56,6 @@ def buscar():
     estado    = (body.get("estado") or "").strip()
     bairro    = (body.get("bairro") or "").strip()
     quantidade = int(body.get("quantidade", 40))
-    extrair   = bool(body.get("extrair_dados", True))
 
     if not tipo or not cidade or not estado:
         return jsonify({"erro": "Preencha o tipo de negócio, a cidade e o estado."}), 400
@@ -81,19 +80,18 @@ def buscar():
 
     threading.Thread(
         target=_executar,
-        args=(job_id, termo, quantidade, extrair),
+        args=(job_id, termo, quantidade),
         daemon=True,
     ).start()
 
     return jsonify({"job_id": job_id})
 
 
-def _executar(job_id, termo, quantidade, extrair):
+def _executar(job_id, termo, quantidade):
     try:
         leads = executar_busca(
             termo=termo,
             quantidade=quantidade,
-            extrair_dados=extrair,
             log_fn=lambda msg: _log(job_id, msg),
         )
         with _lock:
