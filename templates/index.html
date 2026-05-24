@@ -412,8 +412,17 @@
   function checarStatus() {
     if (!jobId) return;
     fetch('/status/' + jobId)
-      .then(r => r.json())
+      .then(r => {
+        if (r.status === 404) {
+          clearInterval(polling);
+          document.getElementById('btn-buscar').disabled = false;
+          mostrarErro('O servidor reiniciou durante a busca. Clique em Gerar Relatório para tentar novamente.');
+          return null;
+        }
+        return r.json();
+      })
       .then(d => {
+        if (!d) return;
         if (d.log) {
           const lb = document.getElementById('log-box');
           lb.textContent = d.log;
@@ -424,6 +433,7 @@
           carregarResultado();
         } else if (d.status === 'error') {
           clearInterval(polling);
+          document.getElementById('btn-buscar').disabled = false;
           mostrarErro(d.erro || 'Erro desconhecido.');
         }
       })
