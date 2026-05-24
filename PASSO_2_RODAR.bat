@@ -5,13 +5,8 @@ cls
 
 echo.
 echo  ================================================
-echo   PASSO 2 - CAPTURANDO LEADS
+echo   Abrindo a interface...
 echo  ================================================
-echo.
-echo  O navegador vai abrir automaticamente.
-echo  Nao feche esta janela enquanto estiver rodando.
-echo.
-echo  ------------------------------------------------
 echo.
 
 REM --- Verifica se o Python esta instalado ---
@@ -34,16 +29,4 @@ pause
 exit /b 1
 
 :rodar
-%PYTHON% captura_leads.py
-
-echo.
-echo  ================================================
-echo   CONCLUIDO!
-echo.
-echo   Seu arquivo de leads foi salvo como:
-echo   leads.csv  (nesta mesma pasta)
-echo.
-echo   Abra com Excel ou Google Sheets.
-echo  ================================================
-echo.
-pause
+%PYTHON% interface.py
