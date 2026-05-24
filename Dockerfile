@@ -24,6 +24,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxext6 \
     fonts-liberation \
     libfontconfig1 \
+    libasound2t64 \
     wget \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
